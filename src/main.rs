@@ -301,6 +301,12 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                                 } else {
                                     send_discord("Shutdown cancelled".to_string());
                                 }
+                                let _rcon = Command::new(get_option!(config, "mcrcon-path"))
+                                    .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
+                                        "say Shutdown cancelled",
+                                    ])
+                                    .stdin(Stdio::null())
+                                    .spawn()?;
                                 
                                 if let ServerStatus::Stopping{ server: Some(server), .. } = server_status {
                                     server_status = ServerStatus::Running{server};
