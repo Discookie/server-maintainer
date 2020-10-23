@@ -4,8 +4,9 @@
     "rcon_password": "rcon_password",
     
     "java-path": "java.exe",
-    "server-path": "E:\\fullpath.jar",
     "mcrcon-path": "E:\\fullpath.exe",
+    "server-path": "E:\\fullpath.jar",
+    "server-folder": "E:\\",
 
     "min-ram": "2G",
     "max-ram": "4G",

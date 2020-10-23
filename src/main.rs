@@ -190,11 +190,12 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
 
                         let java_path = get_option!(config, "java-path");
                         let server_path = get_option!(config, "server-path");
+                        let server_folder = get_option!(config, "server-folder");
                         let min_ram = format!("-Xms{}", get_option!(config, "min-ram"));
                         let max_ram = format!("-Xmx{}", get_option!(config, "max-ram"));
                         
                         let mut server = Command::new(java_path)
-                            .current_dir(r#"E:\Temp\8"#)
+                            .current_dir(server_folder)
                             .args(&[min_ram.as_str(), max_ram.as_str(), "-d64", "-server",
                                 "-XX:+AggressiveOpts", "-XX:+UseConcMarkSweepGC",
                                 "-XX:+UnlockExperimentalVMOptions", "-XX:+UseParNewGC",
@@ -251,6 +252,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                                 "say Shutting down in 1 minute",
                                 "shutdown",
                             ])
+                            .stdin(Stdio::null())
                             .spawn()?;
                         server_status = ServerStatus::Stopping{ server: server_process, rcon };
                         send_discord("Server will be stopped in 5 minutes, type `mc!cancel` to cancel".to_string());
@@ -280,6 +282,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                             .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
                                 "shutdown",
                             ])
+                            .stdin(Stdio::null())
                             .spawn()?;
                         server_status = ServerStatus::Stopping{ server: server_process, rcon };
                         send_discord("Server is stopping now".to_string());
@@ -337,6 +340,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                             .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
                                 "backup start",
                             ])
+                            .stdin(Stdio::null())
                             .spawn()?;
                         info!("Backup started.");
                         send_discord("Backup started.".to_string());
@@ -366,6 +370,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                                 "backup start",
                                 op_user.as_str(),
                             ])
+                            .stdin(Stdio::null())
                             .spawn()?;
                         warn!("Opped user {} by command", user);
                         send_discord(format!("Opped user {}. All ops are logged.\nDon't forget to de-op yourself after you're done!", user));
