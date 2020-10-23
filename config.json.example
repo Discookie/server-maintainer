@@ -1,0 +1,15 @@
+{
+    "username": "bot_username",
+    "password": "bot_password",
+    "rcon_password": "rcon_password",
+    
+    "java-path": "java.exe",
+    "server-path": "E:\\fullpath.jar",
+    "mcrcon-path": "E:\\fullpath.exe",
+
+    "min-ram": "2G",
+    "max-ram": "4G",
+
+    "config-level": "",
+    "console-enabled": false
+}

@@ -1,0 +1,19 @@
+[package]
+name = "server-maintainer"
+version = "0.2.0"
+authors = ["Discookie <matekos17@fazekas.hu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4"
+clap = "2.33"
+crossbeam = "0.8"
+discord = { version = "0.8", git = "https://github.com/Discookie/discord-rs", default-features = false }
+fern = "0.6"
+log = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+subprocess = "0.2"
+text_io = "0.1"
