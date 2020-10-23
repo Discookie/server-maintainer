@@ -171,7 +171,7 @@ pub mod scanners {
 
     simple_scan!(
         scan_server_start => "mcjtylib_ng": "RFTools: server is starting" -> FromServerLog::ServerStarted;
-        scan_server_stop => "net.minecraft.server.MinecraftServer": "Stopping server" -> FromServerLog::ServerStopping;
+        scan_server_stop => "minecraft/DedicatedServer": "Stopping the server" -> FromServerLog::ServerStopping;
         scan_backup_start => "minecraft/DedicatedServer": "Server Backup started!" -> FromServerLog::BackupStarted
     );
 
