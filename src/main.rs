@@ -125,7 +125,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
         macro_rules! send_or_queue {
             ($name:expr, $message:expr) => {
                 let now = Local::now();
-                if last_chat_msg - now > MESSAGE_TIMEOUT {
+                if now - last_chat_msg > MESSAGE_TIMEOUT {
                     let mut message_str = String::new();
     
                     for CachedChat { name, message } in chat_msg_cache.iter() {
@@ -443,7 +443,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                         if let ServerStatus::Starting { server, start_time } = server_status {
                             server_status = ServerStatus::Running { server };
 
-                            let elapsed_time = start_time - Local::now();
+                            let elapsed_time = Local::now() - start_time;
                             send_discord(format!("Server's now running, startup: {}s", elapsed_time.num_seconds()));
                         } else {
                             error!("Server is running, but previous status was invalid");
