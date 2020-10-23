@@ -506,7 +506,7 @@ pub fn server_log_thread(_config: Value, output: ChildStdout, log_send: Sender<F
                 scan_user_logout => [Level::Info] "server_chat": "{} left the game", name
             );
 
-            if level >= Level::Error {
+            if level <= Level::Error {
                 let error_msg = FromServerLog::ServerError {
                     exception: message.clone(),
                     sender: sender_handle.clone()
@@ -514,7 +514,7 @@ pub fn server_log_thread(_config: Value, output: ChildStdout, log_send: Sender<F
                 log_send.send(error_msg)?;
             }
 
-            if level >= Level::Warn {
+            if level <= Level::Warn {
                 log!(target: "server_log", level, "[{}/{}]: {}",
                     scanned_line.sender_thread,
                     sender_handle,
@@ -531,7 +531,7 @@ pub fn server_log_thread(_config: Value, output: ChildStdout, log_send: Sender<F
             }
         } else {
             if CONSOLE_ENABLED.load(Ordering::Relaxed) {
-                error!(target: "server_err", "[Stack Trace]: {}", line);
+                error!(target: "server_log", "[Stack Trace]: {}", line);
                 continue;
             }
 
