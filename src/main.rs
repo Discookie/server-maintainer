@@ -74,7 +74,7 @@ enum ServerStatus {
     },
     Stopping {
         server: Option<Child>,
-        rcon: Child,
+        rcon: Option<Child>,
     }
 }
 
@@ -144,18 +144,35 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
         }
 
         if let ServerStatus::Stopping{ rcon, server } = &mut server_status {
-            let rcon_stopped = matches!(rcon.try_wait(), Ok(Some(_)));
-            
             if let Some(server) = server {
-                if let Ok(Some(_)) = server.try_wait() {
-                    if rcon_stopped {
+                let server_stopped = match server.try_wait() {
+                    Ok(None) => false,
+                    _ => true
+                };
+                let rcon_stopped = {
+                    if let Some(rcon) = rcon {
+                        match rcon.try_wait() {
+                            Ok(None) => false,
+                            _ => true
+                        }
+                    } else {
+                        true
+                    }
+                };
+
+                if server_stopped {
+                    if !rcon_stopped {
+                        if let Some(rcon) = rcon {
+                            rcon.kill().ok();
+                        }
+
+                        send_discord("Server stopped before time.".to_string());
+                        warn!("Server stopped before time.");
+                    } else {
                         send_discord("Server stopped.".to_string());
                         info!("Server stopped.");
-                    } else {
-                        rcon.kill().ok();
-                        send_discord("Server stopped unexpectedly.".to_string());
-                        warn!("Server stopped before time.");
                     }
+
                     server_status = ServerStatus::Offline;
                 }
             }
@@ -242,7 +259,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                             }
                             _ => ()
                         }
-                        let rcon = Command::new(get_option!(config, "mcrcon-path"))
+                        let rcon = Some(Command::new(get_option!(config, "mcrcon-path"))
                             .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
                                 "-w", "60",
                                 "say Shutting down in 5 minutes",
@@ -253,7 +270,7 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                                 "shutdown",
                             ])
                             .stdin(Stdio::null())
-                            .spawn()?;
+                            .spawn()?);
                         server_status = ServerStatus::Stopping{ server: server_process, rcon };
                         send_discord("Server will be stopped in 5 minutes, type `mc!cancel` to cancel".to_string());
                         info!("Server stop started.");
@@ -278,12 +295,12 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                             }
                             _ => ()
                         }
-                        let rcon = Command::new(get_option!(config, "mcrcon-path"))
+                        let rcon = Some(Command::new(get_option!(config, "mcrcon-path"))
                             .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
                                 "shutdown",
                             ])
                             .stdin(Stdio::null())
-                            .spawn()?;
+                            .spawn()?);
                         server_status = ServerStatus::Stopping{ server: server_process, rcon };
                         send_discord("Server is stopping now".to_string());
                         info!("Server killed.");
@@ -295,12 +312,13 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
 
                     Ok(FromDiscord::CancelShutdownEvent) => {
                         match &mut server_status {
-                            ServerStatus::Stopping{ rcon, .. } => {
+                            ServerStatus::Stopping{ rcon: Some(rcon), .. } => {
                                 if let Err(_) = rcon.kill() {
                                     send_discord("Error while cancelling shutdown".to_string());
                                 } else {
                                     send_discord("Shutdown cancelled".to_string());
                                 }
+
                                 let _rcon = Command::new(get_option!(config, "mcrcon-path"))
                                     .args(&["-P", "25564", "-p", get_option!(config, "rcon_password"), "-s",
                                         "say Shutdown cancelled",
@@ -313,6 +331,11 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                                 } else {
                                     server_status = ServerStatus::Unknown;
                                 }
+                            },
+
+                            ServerStatus::Stopping{ rcon: None, .. } => {
+                                send_discord("Shutdown cannot be cancelled".to_string());
+                                continue;
                             },
 
                             ServerStatus::Offline => {
@@ -458,6 +481,12 @@ fn main_thread(config: &Value, bot: Discord) -> Result<(), Box<dyn Error>> {
                     },
                     Ok(FromServerLog::ServerStopping) => {
                         send_discord("Server is now stopping...".to_string());
+                        if let ServerStatus::Running { server } = server_status {
+                            server_status = ServerStatus::Stopping {
+                                server: Some(server),
+                                rcon: None
+                            }
+                        }
                     },
 
                     Ok(FromServerLog::ServerError { exception, sender }) => {
